@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#0a3d2c" />
+  <title>TrapGuard AI</title>
+  <link rel="manifest" href="/static/manifest.json" />
+  <link rel="stylesheet" href="/static/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3/dist/coco-ssd.min.js"></script>
+</head>
+<body>
+  <section id="signinView" class="signin-view">
+    <div class="signin-card">
+      <div class="brand-mark">TG</div>
+      <h1>TrapGuard AI</h1>
+      <p class="signin-subtitle">Forest Officer Sign In</p>
+      <label>Officer</label>
+      <select id="signinName" class="control"></select>
+      <label>4-digit PIN</label>
+      <input id="signinPin" class="control" type="password" inputmode="numeric" maxlength="4" placeholder="••••" />
+      <button id="signinBtn" class="btn btn-primary btn-xl">Sign In</button>
+      <p class="demo-hint">Demo PINs: Asha 1111 · Ravi 2222 · Neel 3333 · Admin 9999</p>
+    </div>
+  </section>
+
+  <div id="appShell" class="app-shell hidden">
+    <header class="topbar">
+      <div class="brand-row">
+        <button class="icon-btn" aria-label="Menu">☰</button>
+        <div class="logo-box">TG</div>
+        <div>
+          <div class="brand-title">TrapGuard</div>
+          <div class="brand-sub">AI WILDLIFE MONITORING</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <span id="sessionUser" class="session-chip"></span>
+        <span id="roleChip" class="role-chip"></span>
+        <button id="signoutBtn" class="btn btn-danger">End Shift / Sign Out</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <aside class="sidebar">
+        <button class="nav-btn active" data-tab="camera">📷 Camera Detection</button>
+        <button class="nav-btn" data-tab="alerts">🚨 Alerts</button>
+        <button class="nav-btn admin-only" data-tab="admin">🛡 Admin Dashboard</button>
+      </aside>
+
+      <section class="content">
+        <section id="cameraTab" class="tab active">
+          <div class="page-heading-row">
+            <div>
+              <p class="eyebrow">LIVE FIELD CAMERA</p>
+              <h2>Camera Detection</h2>
+            </div>
+            <span id="liveStatus" class="status-chip status-stopped">STOPPED</span>
+          </div>
+
+          <div class="card controls-card">
+            <div class="control-grid">
+              <div>
+                <label>Camera</label>
+                <select id="cameraSelect" class="control"></select>
+              </div>
+              <div>
+                <label>Confidence <span id="confidenceValue">50%</span></label>
+                <input id="confidenceSlider" type="range" min="0.3" max="0.9" step="0.05" value="0.5" />
+              </div>
+              <div class="button-cluster">
+                <button id="startBtn" class="btn btn-primary">Start Camera</button>
+                <button id="stopBtn" class="btn btn-light">Stop</button>
+                <button id="switchBtn" class="btn btn-light">Switch Camera</button>
+                <label class="btn btn-light upload-btn">Upload Video<input id="videoUpload" type="file" accept="video/*" hidden /></label>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-grid compact">
+            <div class="stat-card"><span class="stat-label">FPS</span><strong id="fpsValue">0</strong><small>Detection speed</small></div>
+            <div class="stat-card"><span class="stat-label">Animals</span><strong id="animalCount">0</strong><small>Current frame</small></div>
+            <div class="stat-card"><span class="stat-label">People / Vehicles</span><strong id="riskCount">0</strong><small>Current frame</small></div>
+            <div class="stat-card"><span class="stat-label">Model</span><strong id="modelState">Not loaded</strong><small>COCO-SSD lite</small></div>
+          </div>
+
+          <div id="alertBanner" class="alert-banner hidden"></div>
+
+          <div class="camera-layout">
+            <div class="card camera-card">
+              <div class="card-head"><span>Live View</span><span class="mini-note">Green = animal · Red = person/vehicle/object</span></div>
+              <div id="videoStage" class="video-stage">
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="overlay"></canvas>
+                <div id="cameraEmpty" class="camera-empty">Start the camera or upload a video.</div>
+              </div>
+            </div>
+
+            <div class="card log-card">
+              <div class="card-head"><span>Live Detection Log</span><div><button id="clearLogBtn" class="small-btn">Clear</button><button id="downloadLogBtn" class="small-btn">Download CSV</button></div></div>
+              <div id="detectionLog" class="detection-log"></div>
+            </div>
+          </div>
+
+          <details class="card simulate-card">
+            <summary>Simulate Demo Alerts</summary>
+            <p>Use these buttons to demo every feature without live wildlife.</p>
+            <div class="simulate-grid">
+              <button data-sim="trail" class="btn btn-light">Trail Deviation</button>
+              <button data-sim="inactivity" class="btn btn-light">Inactivity</button>
+              <button data-sim="repeat" class="btn btn-light">Repeated Trigger</button>
+              <button data-sim="sudden" class="btn btn-light">Sudden Movement</button>
+              <button data-sim="dragging" class="btn btn-light">Dragging</button>
+              <button data-sim="human" class="btn btn-warning">Protected Human</button>
+              <button data-sim="poaching" class="btn btn-danger">Human + Animal</button>
+              <button data-sim="object" class="btn btn-danger">Suspicious Object</button>
+            </div>
+          </details>
+        </section>
+
+        <section id="alertsTab" class="tab">
+          <div class="page-heading-row">
+            <div><p class="eyebrow">LIVE AI FEED</p><h2>Critical Incidents</h2></div>
+            <span class="status-chip status-live">AUTO REFRESH</span>
+          </div>
+          <div class="card filter-card">
+            <select id="severityFilter" class="control"><option value="">All severities</option><option>info</option><option>warning</option><option>high</option><option>critical</option></select>
+            <select id="typeFilter" class="control"><option value="">All types</option></select>
+          </div>
+          <div id="alertsList" class="alerts-list"></div>
+        </section>
+
+        <section id="adminTab" class="tab admin-only">
+          <div class="page-heading-row"><div><p class="eyebrow">COMMAND CENTER</p><h2>Admin Dashboard</h2></div></div>
+          <div class="stats-grid">
+            <div class="stat-card"><span>Total Alerts</span><strong id="statTotal">0</strong></div>
+            <div class="stat-card danger"><span>Crimes</span><strong id="statCrimes">0</strong></div>
+            <div class="stat-card warning"><span>Escalated</span><strong id="statEscalated">0</strong></div>
+            <div class="stat-card"><span>Pending</span><strong id="statPending">0</strong></div>
+          </div>
+          <div class="admin-grid">
+            <div class="card"><div class="card-head"><span>Hotspots by Camera</span></div><div id="hotspotBars"></div></div>
+            <div class="card"><div class="card-head"><span>Camera Nodes</span></div><div id="cameraList"></div></div>
+            <div class="card wide"><div class="card-head"><span>Patrol Schedule</span></div><div class="table-wrap"><table><thead><tr><th>Ranger</th><th>Camera</th><th>Start</th><th>End</th></tr></thead><tbody id="scheduleBody"></tbody></table></div></div>
+            <div class="card wide"><div class="card-head"><span>Escalated / Crime Alerts</span></div><div id="adminAlerts"></div></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-btn active" data-tab="camera">📷<span>Camera</span></button>
+      <button class="nav-btn" data-tab="alerts">🚨<span>Alerts</span></button>
+      <button class="nav-btn admin-only" data-tab="admin">🛡<span>Admin</span></button>
+    </nav>
+  </div>
+
+  <div id="verificationModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="modal-card">
+      <h3>Was this you?</h3>
+      <img id="verifyImage" class="verify-image hidden" alt="Alert snapshot" />
+      <p id="verifyMessage">Someone passed through a protected camera.</p>
+      <div class="modal-actions">
+        <button id="verifyYesBtn" class="btn btn-primary">✅ It's me</button>
+        <button id="verifyNoBtn" class="btn btn-danger">❌ Not me</button>
+      </div>
+      <button id="verifyCloseBtn" class="btn btn-light full-width">Close</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="/static/app.js"></script>
+</body>
+</html>

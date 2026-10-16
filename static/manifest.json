@@ -1,0 +1,10 @@
+{
+  "name": "TrapGuard AI",
+  "short_name": "TrapGuard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#0a3d2c",
+  "description": "AI wildlife camera-trap monitoring for forest officers",
+  "icons": []
+}
