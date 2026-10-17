@@ -1,6 +1,26 @@
 /* TrapGuard AI frontend: plain JavaScript, intentionally kept framework-free. */
 const API = '';
 const $ = (id) => document.getElementById(id);
+// Only touch the DOM when content really changed (stops animations replaying on every refresh)
+const setHTML = (id, html) => { const el = $(id); if (el.dataset.h !== html) { el.innerHTML = html; el.dataset.h = html; } };
+// Smooth number count-up
+function countTo(id, to) {
+  const el = $(id), from = Number(el.textContent) || 0; to = Number(to) || 0;
+  if (from === to) { el.textContent = to; return; }
+  const t0 = performance.now();
+  (function step(t) { const p = Math.min(1, (t - t0) / 700); el.textContent = Math.round(from + (to - from) * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); })(t0);
+}
+// Zone map: cameras drawn as dots, colour = current alert level
+function renderZoneMap(alerts) {
+  const live = alerts.filter(a => ['pending', 'crime', 'escalated'].includes(a.status));
+  const html = state.cameras.map(c => {
+    const mine = live.filter(a => a.camera_name === c.name);
+    const cls = mine.some(a => ['high', 'critical'].includes(a.severity)) ? 'red' : mine.some(a => a.severity === 'warning') ? 'amber' : 'green';
+    const left = 10 + (c.id * 37) % 80, top = 14 + (c.id * 53) % 66;
+    return `<div class="map-dot ${cls}" style="left:${left}%;top:${top}%"><span>${c.name}</span></div>`;
+  }).join('');
+  setHTML('zoneMap', html);
+}
 const state = {
   session: JSON.parse(localStorage.getItem('trapguard_session') || 'null'),
   model: null,
@@ -303,10 +323,10 @@ async function loadAlerts() {
     const severity = $('severityFilter').value, type = $('typeFilter').value;
     const types = [...new Set(data.map(a => a.type))];
     const old = $('typeFilter').value;
-    $('typeFilter').innerHTML = '<option value="">All types</option>' + types.map(t => `<option value="${t}">${t.replaceAll('_',' ')}</option>`).join('');
+    setHTML('typeFilter', '<option value="">All types</option>' + types.map(t => `<option value="${t}">${t.replaceAll('_',' ')}</option>`).join(''));
     $('typeFilter').value = old;
     const filtered = data.filter(a => (!severity || a.severity === severity) && (!type || a.type === type));
-    $('alertsList').innerHTML = filtered.length ? filtered.map(alertCard).join('') : '<div class="card" style="padding:18px">No matching alerts.</div>';
+    setHTML('alertsList', filtered.length ? filtered.map(alertCard).join('') : '<div class="card" style="padding:18px">No matching alerts.</div>');
     document.querySelectorAll('[data-verify-id]').forEach(b => b.onclick = () => verifyAlert(Number(b.dataset.verifyId), b.dataset.action));
     const pending = data.find(a => a.status === 'pending' && ['human_vehicle','human_animal','suspicious_object'].includes(a.type));
     if (pending && pending.id !== state.latestPendingAlertId) openVerifyModal(pending);
@@ -341,12 +361,13 @@ async function loadAdmin() {
   if (state.session?.role !== 'admin') return;
   try {
     const [stats, schedule, alerts] = await Promise.all([api('/api/stats'), api('/api/schedule'), api('/api/alerts?limit=100')]);
-    $('statTotal').textContent = stats.total; $('statCrimes').textContent = stats.crimes; $('statEscalated').textContent = stats.escalated; $('statPending').textContent = stats.pending;
+    countTo('statTotal', stats.total); countTo('statCrimes', stats.crimes); countTo('statEscalated', stats.escalated); countTo('statPending', stats.pending);
     const max = Math.max(1, ...stats.hotspots.map(h => h.alert_count));
-    $('hotspotBars').innerHTML = stats.hotspots.map(h => `<div class="bar-row"><div class="bar-label"><span>${h.name}</span><span>${h.alert_count}</span></div><div class="bar-track"><div class="bar-fill" style="width:${h.alert_count/max*100}%"></div></div></div>`).join('');
-    $('scheduleBody').innerHTML = schedule.map(s => `<tr><td>${s.ranger_name}</td><td>${s.camera_name}</td><td>${new Date(s.start_time+'Z').toLocaleString()}</td><td>${new Date(s.end_time+'Z').toLocaleString()}</td></tr>`).join('');
+    setHTML('hotspotBars', stats.hotspots.map(h => `<div class="bar-row"><div class="bar-label"><span>${h.name}</span><span>${h.alert_count}</span></div><div class="bar-track"><div class="bar-fill" style="width:${h.alert_count/max*100}%"></div></div></div>`).join(''));
+    setHTML('scheduleBody', schedule.map(s => `<tr><td>${s.ranger_name}</td><td>${s.camera_name}</td><td>${new Date(s.start_time+'Z').toLocaleString()}</td><td>${new Date(s.end_time+'Z').toLocaleString()}</td></tr>`).join(''));
+    renderZoneMap(alerts);
     const important = alerts.filter(a => ['crime','escalated'].includes(a.status));
-    $('adminAlerts').innerHTML = important.length ? important.map(a => `<div class="camera-node"><div><strong>${a.message}</strong><div class="alert-meta">${a.camera_name} · ${a.status}</div></div>${a.snapshot_path ? `<img class="alert-thumb" src="${a.snapshot_path}">` : ''}</div>`).join('') : '<div style="padding:14px" class="alert-meta">No escalated/crime alerts yet.</div>';
+    setHTML('adminAlerts', important.length ? important.map(a => `<div class="camera-node"><div><strong>${a.message}</strong><div class="alert-meta">${a.camera_name} · ${a.status}</div></div>${a.snapshot_path ? `<img class="alert-thumb" src="${a.snapshot_path}">` : ''}</div>`).join('') : '<div style="padding:14px" class="alert-meta">No escalated/crime alerts yet.</div>');
   } catch { showToast('Admin dashboard could not refresh.', true); }
 }
 

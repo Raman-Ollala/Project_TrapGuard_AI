@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#0a3d2c" />
+  <meta name="theme-color" content="#0d2818" />
   <title>TrapGuard AI</title>
   <link rel="manifest" href="/static/manifest.json" />
   <link rel="stylesheet" href="/static/style.css" />
@@ -12,6 +14,7 @@
 </head>
 <body>
   <section id="signinView" class="signin-view">
+    <div class="blob b1"></div><div class="blob b2"></div>
     <div class="signin-card">
       <div class="brand-mark">TG</div>
       <h1>TrapGuard AI</h1>
@@ -28,7 +31,6 @@
   <div id="appShell" class="app-shell hidden">
     <header class="topbar">
       <div class="brand-row">
-        <button class="icon-btn" aria-label="Menu">☰</button>
         <div class="logo-box">TG</div>
         <div>
           <div class="brand-title">TrapGuard</div>
@@ -44,31 +46,25 @@
 
     <main class="layout">
       <aside class="sidebar">
+        <div class="nav-label">MONITORING</div>
         <button class="nav-btn active" data-tab="camera">📷 Camera Detection</button>
         <button class="nav-btn" data-tab="alerts">🚨 Alerts</button>
         <button class="nav-btn admin-only" data-tab="admin">🛡 Admin Dashboard</button>
+        <div class="sidebar-status"><span class="pulse-ring"></span><div><strong>AI Sentinel</strong><small>Detection &amp; alert engine online</small></div></div>
       </aside>
 
       <section class="content">
         <section id="cameraTab" class="tab active">
           <div class="page-heading-row">
-            <div>
-              <p class="eyebrow">LIVE FIELD CAMERA</p>
-              <h2>Camera Detection</h2>
-            </div>
+            <div><p class="eyebrow">LIVE FIELD CAMERA</p><h2>Camera Detection</h2></div>
             <span id="liveStatus" class="status-chip status-stopped">STOPPED</span>
           </div>
 
           <div class="card controls-card">
             <div class="control-grid">
-              <div>
-                <label>Camera</label>
-                <select id="cameraSelect" class="control"></select>
-              </div>
-              <div>
-                <label>Confidence <span id="confidenceValue">50%</span></label>
-                <input id="confidenceSlider" type="range" min="0.3" max="0.9" step="0.05" value="0.5" />
-              </div>
+              <div><label>Camera</label><select id="cameraSelect" class="control"></select></div>
+              <div><label>Confidence <span id="confidenceValue">50%</span></label>
+                <input id="confidenceSlider" type="range" min="0.3" max="0.9" step="0.05" value="0.5" /></div>
               <div class="button-cluster">
                 <button id="startBtn" class="btn btn-primary">Start Camera</button>
                 <button id="stopBtn" class="btn btn-light">Stop</button>
@@ -81,7 +77,7 @@
           <div class="stats-grid compact">
             <div class="stat-card"><span class="stat-label">FPS</span><strong id="fpsValue">0</strong><small>Detection speed</small></div>
             <div class="stat-card"><span class="stat-label">Animals</span><strong id="animalCount">0</strong><small>Current frame</small></div>
-            <div class="stat-card"><span class="stat-label">People / Vehicles</span><strong id="riskCount">0</strong><small>Current frame</small></div>
+            <div class="stat-card danger"><span class="stat-label">People / Vehicles</span><strong id="riskCount">0</strong><small>Current frame</small></div>
             <div class="stat-card"><span class="stat-label">Model</span><strong id="modelState">Not loaded</strong><small>COCO-SSD lite</small></div>
           </div>
 
@@ -93,10 +89,10 @@
               <div id="videoStage" class="video-stage">
                 <video id="video" autoplay muted playsinline></video>
                 <canvas id="overlay"></canvas>
+                <div class="scanline"></div>
                 <div id="cameraEmpty" class="camera-empty">Start the camera or upload a video.</div>
               </div>
             </div>
-
             <div class="card log-card">
               <div class="card-head"><span>Live Detection Log</span><div><button id="clearLogBtn" class="small-btn">Clear</button><button id="downloadLogBtn" class="small-btn">Download CSV</button></div></div>
               <div id="detectionLog" class="detection-log"></div>
@@ -140,6 +136,7 @@
             <div class="stat-card"><span>Pending</span><strong id="statPending">0</strong></div>
           </div>
           <div class="admin-grid">
+            <div class="card wide"><div class="card-head"><span>Live Zone Map</span><span class="mini-note"><i class="lg g"></i>Safe <i class="lg a"></i>Suspicious <i class="lg r"></i>High risk</span></div><div id="zoneMap" class="zone-map"></div></div>
             <div class="card"><div class="card-head"><span>Hotspots by Camera</span></div><div id="hotspotBars"></div></div>
             <div class="card"><div class="card-head"><span>Camera Nodes</span></div><div id="cameraList"></div></div>
             <div class="card wide"><div class="card-head"><span>Patrol Schedule</span></div><div class="table-wrap"><table><thead><tr><th>Ranger</th><th>Camera</th><th>Start</th><th>End</th></tr></thead><tbody id="scheduleBody"></tbody></table></div></div>
