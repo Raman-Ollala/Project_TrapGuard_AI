@@ -1,6 +1,6 @@
 # TrapGuard AI
 
-A simple, demo-ready wildlife camera-trap monitoring web app for Tadoba Tiger Reserve. It works for any supported COCO-SSD animal class and is designed for forest rangers and an admin.
+A simple, demo-ready wildlife camera-trap monitoring web app for Tadoba Tiger Reserve. It works for any supported COCO-SSD animal class(cat,dog,tiger) and is designed for forest rangers and an admin.
 
 ## Architecture
 
