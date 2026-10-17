@@ -9,7 +9,6 @@ A simple, demo-ready wildlife camera-trap monitoring web app for Tadoba Tiger Re
 - Backend: FastAPI + standard-library `sqlite3`
 - Database file: `trapguard.db`, auto-created and seeded
 - Snapshots: saved automatically in `/snapshots`
-- Telegram: optional; when keys are missing the app prints messages to the server console and continues working
 
 ## Demo sign-in
 
@@ -40,14 +39,6 @@ ngrok http 8000
 
 Then set `PUBLIC_BASE_URL` in `.env` to the HTTPS ngrok URL so Telegram verification buttons point back to your app.
 
-## Telegram setup
-
-1. Create a bot with BotFather and copy its token.
-2. Send a message to the bot from the ranger/admin chats and obtain the chat IDs.
-3. Copy `.env.example` to `.env` and fill in `TELEGRAM_BOT_TOKEN`, `RANGER_CHAT_ID`, `ADMIN_CHAT_ID` and `PUBLIC_BASE_URL`.
-4. Restart Uvicorn.
-5. If any Telegram value is missing, TrapGuard prints the notification instead of crashing.
-
 ## Two-minute demo
 
 1. Sign in as **Ranger Asha / 1111**. Open Camera Detection and press **Start Camera**. COCO-SSD loads in the browser; supported animals get green boxes and people/vehicles/objects get red boxes.
@@ -71,7 +62,6 @@ trapguard_ai/
 ├── main.py
 ├── rules.py
 ├── db.py
-├── telegram_utils.py
 ├── requirements.txt
 ├── .env.example
 ├── README.md
