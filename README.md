@@ -37,8 +37,6 @@ Camera access works on `localhost`; on a phone or remote host, use HTTPS. A quic
 ngrok http 8000
 ```
 
-Then set `PUBLIC_BASE_URL` in `.env` to the HTTPS ngrok URL so Telegram verification buttons point back to your app.
-
 ## Two-minute demo
 
 1. Sign in as **Ranger Asha / 1111**. Open Camera Detection and press **Start Camera**. COCO-SSD loads in the browser; supported animals get green boxes and people/vehicles/objects get red boxes.
